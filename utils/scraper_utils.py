@@ -12,7 +12,7 @@ def get_soup(url:str = BASE_URL,
              delay_range = (2, 10)):
     for attempt in range(retry):
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=HEADERS)
             response.raise_for_status()
             return BeautifulSoup(response.content, "html.parser")
         
