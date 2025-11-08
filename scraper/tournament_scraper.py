@@ -16,105 +16,185 @@ class TournamentScraper:
         self.tier = tier
         self.portal = get_url(get_soup(base_url), "portal:tournament")
         
-    def scrape_tier_page(self) -> set:
+    def scrape_tier_page(self) -> list:
         logging.info("Running scrape_tier_page method of Tournament Scraper class.")
         processed = set()
-        queue = self.portal
-        start = 0
-        url_count = len(queue)
+        queue = list(self.portal)
         try:
             result = set()
-            while queue and start < url_count:
-                current_url = queue.pop()
+            for current_url in queue:
+                logging.info(f"Scraping URL: {current_url}")
                 if current_url in processed:
+                    logging.info(f"Already scraping URL: {current_url}")
                     continue
                 
+                logging.info("Fetching soup ...")
                 soup = get_soup(current_url)
+                logging.info("Soup Fetched, extracting items ...")
                 urls = get_url(soup, "tier")
+                logging.info(f"Found {len(urls)} items for tier.")
                 for url in urls:
                     parse = urlparse(url).path.replace("/", " ")
                     if any(t in parse for t in self.tier):
+                        logging.info(f"Get URL: {url}")
                         result.add(url)
                 
                 processed.add(current_url)
-                start += 1
             
             save_json(result, "tier")
             logging.info("scrape_tier_page method completed.")
-            return result
+            return list(result)
 
         except Exception as e:
             logging.error(f"Error occurs while executing scrape_stage_page method: {e}")
             print("Error occurs while executing scrape_stage_page method")
     
-    def scrape_tournament_page(self, url: set) -> set:
+    def scrape_tournament_page(self, url: set) -> list:
         logging.info("Running scrape_tournament_page method of Tournament Scraper class.")
         processed = set()
-        queue = url
-        start = 0
-        url_count = len(queue)
+        queue = list(url) if isinstance(url, (set, list)) else [url]
         try:
             result = set()
-            while queue and start < url_count:
-                current_url = queue.pop()
+            for current_url in queue:
+                logging.info(f"Scraping URL: {current_url}")
                 if current_url in processed:
+                    logging.info(f"Already scraping URL: {current_url}")
                     continue
                 
+                logging.info("Fetching soup ...")
                 soup = get_soup(current_url)
+                logging.info("Soup Fetched, extracting items ...")
                 urls = get_url(soup, "")
+                logging.info(f"Found {len(urls)} items for tournament.")
                 for url in urls:
                     parse = urlparse(url).path.replace("/", " ")
                     if any(t in parse.lower() for t in self.tournament):
+                        logging.info(f"Get URL: {url}")
                         result.add(url)
                 
                 processed.add(current_url)
-                start += 1
             
             save_json(result, "tournament")
             logging.info("scrape_tournament_page method completed.")
-            return result
+            return list(result)
 
         except Exception as e:
             logging.error(f"Error occurs while executing scrape_stage_page method: {e}")
             print("Error occurs while executing scrape_stage_page method")
     
-    def scrape_stage_page(self, url: set) -> set:
+    def scrape_stage_page(self, url: set) -> list:
         logging.info("Running scrape_stage_page method of Tournament Scraper class.")
         processed = set()
-        queue = url
-        start = 0
-        url_count = len(queue)
+        queue = list(url) if isinstance(url, (set, list)) else [url]
         try:
-            result = set()
-            while queue and start < url_count:
-                current_url = queue.pop()
+            stage = set()
+            tier = []
+            for current_url in queue:
+                logging.info(f"Scraping URL: {current_url}")
                 if current_url in processed:
+                    logging.info(f"Already scraping URL: {current_url}")
                     continue
                 
+                logging.info("Fetching soup ...")
                 soup = get_soup(current_url)
+                logging.info("Soup Fetched, extracting items ...")
                 urls = get_url(soup, "")
+                logging.info(f"Found {len(urls)} items for stage.")
                 for url in urls:
                     parse = urlparse(url).path.replace("/", " ")
                     if any(t in parse.lower() for t in self.stage):
                         if "#" in url:
                             continue
                         if url.startswith(current_url):
-                            result.add(url)
+                            logging.info(f"Get URL: {url}")
+                            stage.add(url)
+                
+                # contents = get_item(soup, "fo-nttax-infobox")
+                # logging.info("Found {len(contents)} contents for stage.")
+                # for item in contents:
+                #    classes = item.get_element(item, "a")
+                #    logging.info(f"Found {len(classes)} class for stage item.")
+                #    text = get_text(classes)
+                #    if any(t in text for t in self.tier):
+                #        logging.info(f"Found text: {text}.")
+                #        tier.append(text)
                 
                 processed.add(current_url)
-                start += 1
             
-            save_json(result, "stage")
+            save_json(stage, "stage")
             logging.info("scrape_stage_page method completed.")
-            return result
+            return list(stage)
         
         except Exception as e:
             logging.error(f"Error occurs while executing scrape_stage_page method: {e}")
             print("Error occurs while executing scrape_stage_page method")
+    
+    def scrape_match_detail(self, url) -> list:
+        logging.info("Running scrape_match_detail method of Match Scraper class.")
+        processed = set()
+        queue = list(url) if isinstance(url, (set, list)) else [url]
+        try:
+            match_detail = []
+            for current_url in queue:
+                logging.info(f"Scraping URL: {current_url}")
+                if current_url in processed:
+                    logging.info(f"Already scraping URL: {current_url}")
+                    continue
+                
+                logging.info("Fetching soup ...")
+                soup = get_soup(current_url)
+                logging.info("Soup fetched, extracting items...")
+                matches = get_item(soup, ".brkts-popup.brkts-match-info-popup")
+                logging.info(f"Found {len(matches)} items for matches.")
+                for match in matches:
+                    dates = get_item(match, ".timer-object.timer-object-datetime-only")
+                    logging.info(f"Found {len(dates)} items for dates.")
+                    for item in dates:
+                        date_info = get_text(item)
+                        logging.info(f"Found text: {date_info}")
+                    
+                    teams = get_item(match, ".name.hidden-xs")
+                    logging.info(f"Found {len(teams)} items for teams.")
+                    home_team = get_text(teams[0])
+                    logging.info(f"Found {len(home_team)} items for home team.")
+                    away_team = get_text(teams[1])
+                    logging.info(f"Found {len(away_team)} items for away team.")
+                    
+                    games = get_item(match, ".brkts-popup-body-game")
+                    logging.info(f"Found {len(games)} items for games.")
+                    for game in games:
+                        duration = get_text(game)
+                        logging.info(f"Found text: {duration}.")
+                        
+                        result = get_item(game, "i", exact=True).get("class", [])
+                        if "fa-check" in result:
+                            status = "win"
+                        else:
+                            status = "loss"
+                        
+                        logging.info("Found home team status: {status}")
+                        match_detail.append({
+                            "date": date_info,
+                            "home_team": home_team,
+                            "away_team": away_team,
+                            "duration": duration,
+                            "winner": home_team if status == "win" else away_team
+                        })
+                
+                processed.add(current_url)
+            logging.info("scrape_match_detail method completed.")
+            return match_detail
+        
+        except Exception as e:
+            logging.error(f"Error occurs while executing scrape_match_detail method: {e}")
+            print("Error occurs while executing scrape_match_detail method")
     
     def run(self):
         logging.info("Running run method of Tournament Scraper class.")
         tier = self.scrape_tier_page()
         tournament = self.scrape_tournament_page(tier)
         stage = self.scrape_stage_page(tournament)
+        match_detail = self.scrape_match_detail(stage)
+        save_csv(pd.DataFrame(match_detail), "match_detail")
         logging.info("run method completed.")
+        return
