@@ -21,7 +21,7 @@ class TournamentScraper:
         processed = set()
         queue = list(self.portal)
         try:
-            result = set()
+            result = []
             for current_url in queue:
                 logging.info(f"Scraping URL: {current_url}")
                 if current_url in processed:
@@ -34,10 +34,10 @@ class TournamentScraper:
                 urls = get_url(soup, "tier")
                 logging.info(f"Found {len(urls)} items for tier.")
                 for url in urls:
-                    parse = urlparse(url).path.replace("/", " ")
-                    if any(t in parse for t in self.tier):
+                    parse = urlparse(url).path
+                    if any(t in parse.replace("/", " ") for t in self.tier):
                         logging.info(f"Get URL: {url}")
-                        result.add(url)
+                        result.append([parse.split("/")[-1][:6], url])
                 
                 processed.add(current_url)
             
@@ -46,16 +46,20 @@ class TournamentScraper:
             return list(result)
 
         except Exception as e:
-            logging.error(f"Error occurs while executing scrape_stage_page method: {e}")
-            print("Error occurs while executing scrape_stage_page method")
+            logging.error(f"Error occurs while executing scrape_tier_page method: {e}")
+            print("Error occurs while executing scrape_tier_page method")
     
-    def scrape_tournament_page(self, url: set) -> list:
+    def scrape_tournament_page(self, url: list) -> list:
         logging.info("Running scrape_tournament_page method of Tournament Scraper class.")
         processed = set()
         queue = list(url) if isinstance(url, (set, list)) else [url]
+        print(f"Queue: {queue[:3]}")
         try:
-            result = set()
-            for current_url in queue:
+            result = []
+            for item in queue:
+                logging.info(f"Found item: {item}")
+                tier = item[0]
+                current_url = item[1]
                 logging.info(f"Scraping URL: {current_url}")
                 if current_url in processed:
                     logging.info(f"Already scraping URL: {current_url}")
@@ -67,10 +71,10 @@ class TournamentScraper:
                 urls = get_url(soup, "")
                 logging.info(f"Found {len(urls)} items for tournament.")
                 for url in urls:
-                    parse = urlparse(url).path.replace("/", " ")
-                    if any(t in parse.lower() for t in self.tournament):
-                        logging.info(f"Get URL: {url}")
-                        result.add(url)
+                    parse = urlparse(url).path
+                    if any(t in parse.replace("/", " ").lower() for t in self.tournament):
+                            logging.info(f"Get URL: {url}")
+                            result.append([tier, " ".join(parse.split("/")[2:]).replace("_", " "), url])
                 
                 processed.add(current_url)
             
@@ -79,17 +83,21 @@ class TournamentScraper:
             return list(result)
 
         except Exception as e:
-            logging.error(f"Error occurs while executing scrape_stage_page method: {e}")
-            print("Error occurs while executing scrape_stage_page method")
+            logging.error(f"Error occurs while executing scrape_tournament_page method: {e}")
+            print("Error occurs while executing scrape_tournament_page method")
     
-    def scrape_stage_page(self, url: set) -> list:
+    def scrape_stage_page(self, url: list) -> list:
         logging.info("Running scrape_stage_page method of Tournament Scraper class.")
         processed = set()
         queue = list(url) if isinstance(url, (set, list)) else [url]
+        print(f"Queue: {queue[:3]}")
         try:
-            stage = set()
-            tier = []
-            for current_url in queue:
+            stage = []
+            for item in queue:
+                logging.info(f"Found item: {item}")
+                tier = item[0]
+                tournament = item[1]
+                current_url = item[2]
                 logging.info(f"Scraping URL: {current_url}")
                 if current_url in processed:
                     logging.info(f"Already scraping URL: {current_url}")
@@ -101,24 +109,12 @@ class TournamentScraper:
                 urls = get_url(soup, "")
                 logging.info(f"Found {len(urls)} items for stage.")
                 for url in urls:
-                    parse = urlparse(url).path.replace("/", " ")
-                    if any(t in parse.lower() for t in self.stage):
-                        if "#" in url:
-                            continue
-                        if url.startswith(current_url):
+                    parse = urlparse(url).path
+                    if any(t in parse.replace("/", " ").lower() for t in self.stage):
+                        if url.startswith(current_url) and "#" not in url:
                             logging.info(f"Get URL: {url}")
-                            stage.add(url)
-                
-                # contents = get_item(soup, "fo-nttax-infobox")
-                # logging.info("Found {len(contents)} contents for stage.")
-                # for item in contents:
-                #    classes = item.get_element(item, "a")
-                #    logging.info(f"Found {len(classes)} class for stage item.")
-                #    text = get_text(classes)
-                #    if any(t in text for t in self.tier):
-                #        logging.info(f"Found text: {text}.")
-                #        tier.append(text)
-                
+                            stage.append([tier, tournament, parse.split("/")[-1].replace("_", " "), url])
+            
                 processed.add(current_url)
             
             save_json(stage, "stage")
@@ -133,9 +129,15 @@ class TournamentScraper:
         logging.info("Running scrape_match_detail method of Match Scraper class.")
         processed = set()
         queue = list(url) if isinstance(url, (set, list)) else [url]
+        print(f"Queue: {queue[:3]}")
         try:
             match_detail = []
-            for current_url in queue:
+            for item in queue:
+                logging.info(f"Found item: {item}")
+                tier = item[0]
+                tournament = item[1]
+                stage = item[2]
+                current_url = item[3]
                 logging.info(f"Scraping URL: {current_url}")
                 if current_url in processed:
                     logging.info(f"Already scraping URL: {current_url}")
@@ -178,7 +180,10 @@ class TournamentScraper:
                             "home_team": home_team,
                             "away_team": away_team,
                             "duration": duration,
-                            "winner": home_team if status == "win" else away_team
+                            "winner": home_team if status == "win" else away_team,
+                            "tier": tier,
+                            "tournament": tournament,
+                            "stage": stage,
                         })
                 
                 processed.add(current_url)
