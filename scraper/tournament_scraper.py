@@ -145,28 +145,37 @@ class TournamentScraper:
                 
                 logging.info("Fetching soup ...")
                 soup = get_soup(current_url)
-                logging.info("Soup fetched, extracting items...")
-                matches = get_item(soup, ".brkts-popup.brkts-match-info-popup")
-                logging.info(f"Found {len(matches)} items for matches.")
-                for match in matches:
-                    dates = get_item(match, ".timer-object.timer-object-datetime-only")
-                    logging.info(f"Found {len(dates)} items for dates.")
-                    for item in dates:
-                        date_info = get_text(item)
-                        logging.info(f"Found text: {date_info}")
+                is_knoutout = bool(get_item(soup, ".brkts-bracket", exact=True))
+                is_group_stage = bool(get_item(soup, ".brkts-matchlist", exact=True))
+                logging.info(f"This tournament stage has {'Knockout and Group Stage' if is_knoutout==is_group_stage==True else 'Knoutout' if is_knoutout==True else 'Group Stage'} System.")
                     
-                    teams = get_item(match, ".name.hidden-xs")
+                logging.info("Soup fetched, extracting items...")
+                matches = get_item(soup, ".brkts-match-has-details")
+                logging.info(f"Found {len(matches)} items for match.")
+                for idx, match in enumerate(matches):
+                    popup = get_item(match, ".brkts-popup", exact=True)
+                    logging.info(f"Found {len(popup)} items for popup.")
+                    timestamp = get_item(popup, ".timer-object.timer-object-datetime-only", exact=True)
+                    logging.info(f"Found {len(timestamp)} items for timestamp.")
+                    date = get_text(timestamp)
+                    logging.info(f"Found text: {date}")
+                    
+                    teams = get_item(popup, ".name.hidden-xs")
                     logging.info(f"Found {len(teams)} items for teams.")
                     home_team = get_text(teams[0])
                     logging.info(f"Found {len(home_team)} items for home team.")
                     away_team = get_text(teams[1])
                     logging.info(f"Found {len(away_team)} items for away team.")
                     
-                    games = get_item(match, ".brkts-popup-body-game")
+                    games = get_item(popup, ".brkts-popup-body-game")
                     logging.info(f"Found {len(games)} items for games.")
                     for game in games:
                         duration = get_text(game)
                         logging.info(f"Found text: {duration}.")
+                        map_name = game.get_text()[5:]
+                        if map_name=="":
+                            map_name = "Default"
+                        logging.info(f"Found text: {map_name}.")
                         
                         result = get_item(game, "i", exact=True).get("class", [])
                         if "fa-check" in result:
@@ -174,9 +183,9 @@ class TournamentScraper:
                         else:
                             status = "loss"
                         
-                        logging.info("Found home team status: {status}")
+                        logging.info(f"Found home team status: {status}")
                         match_detail.append({
-                            "date": date_info,
+                            "date": date,
                             "home_team": home_team,
                             "away_team": away_team,
                             "duration": duration,
@@ -184,6 +193,7 @@ class TournamentScraper:
                             "tier": tier,
                             "tournament": tournament,
                             "stage": stage,
+                            # "bracket": bracket_name
                         })
                 
                 processed.add(current_url)
@@ -200,6 +210,6 @@ class TournamentScraper:
         tournament = self.scrape_tournament_page(tier)
         stage = self.scrape_stage_page(tournament)
         match_detail = self.scrape_match_detail(stage)
-        save_csv(pd.DataFrame(match_detail), "match_detail")
+        save_csv(pd.DataFrame(match_detail), "match_details")
         logging.info("run method completed.")
-        return
+        return stage
