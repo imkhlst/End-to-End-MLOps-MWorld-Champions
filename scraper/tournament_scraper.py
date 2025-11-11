@@ -125,91 +125,10 @@ class TournamentScraper:
             logging.error(f"Error occurs while executing scrape_stage_page method: {e}")
             print("Error occurs while executing scrape_stage_page method")
     
-    def scrape_match_detail(self, url) -> list:
-        logging.info("Running scrape_match_detail method of Match Scraper class.")
-        processed = set()
-        queue = list(url) if isinstance(url, (set, list)) else [url]
-        print(f"Queue: {queue[:3]}")
-        try:
-            match_detail = []
-            for item in queue:
-                logging.info(f"Found item: {item}")
-                tier = item[0]
-                tournament = item[1]
-                stage = item[2]
-                current_url = item[3]
-                logging.info(f"Scraping URL: {current_url}")
-                if current_url in processed:
-                    logging.info(f"Already scraping URL: {current_url}")
-                    continue
-                
-                logging.info("Fetching soup ...")
-                soup = get_soup(current_url)
-                is_knoutout = bool(get_item(soup, ".brkts-bracket", exact=True))
-                is_group_stage = bool(get_item(soup, ".brkts-matchlist", exact=True))
-                logging.info(f"This tournament stage has {'Knockout and Group Stage' if is_knoutout==is_group_stage==True else 'Knoutout' if is_knoutout==True else 'Group Stage'} System.")
-                    
-                logging.info("Soup fetched, extracting items...")
-                matches = get_item(soup, ".brkts-match-has-details")
-                logging.info(f"Found {len(matches)} items for match.")
-                for idx, match in enumerate(matches):
-                    popup = get_item(match, ".brkts-popup", exact=True)
-                    logging.info(f"Found {len(popup)} items for popup.")
-                    timestamp = get_item(popup, ".timer-object.timer-object-datetime-only", exact=True)
-                    logging.info(f"Found {len(timestamp)} items for timestamp.")
-                    date = get_text(timestamp)
-                    logging.info(f"Found text: {date}")
-                    
-                    teams = get_item(popup, ".name.hidden-xs")
-                    logging.info(f"Found {len(teams)} items for teams.")
-                    home_team = get_text(teams[0])
-                    logging.info(f"Found {len(home_team)} items for home team.")
-                    away_team = get_text(teams[1])
-                    logging.info(f"Found {len(away_team)} items for away team.")
-                    
-                    games = get_item(popup, ".brkts-popup-body-game")
-                    logging.info(f"Found {len(games)} items for games.")
-                    for game in games:
-                        duration = get_text(game)
-                        logging.info(f"Found text: {duration}.")
-                        map_name = game.get_text()[5:]
-                        if map_name=="":
-                            map_name = "Default"
-                        logging.info(f"Found text: {map_name}.")
-                        
-                        result = get_item(game, "i", exact=True).get("class", [])
-                        if "fa-check" in result:
-                            status = "win"
-                        else:
-                            status = "loss"
-                        
-                        logging.info(f"Found home team status: {status}")
-                        match_detail.append({
-                            "date": date,
-                            "home_team": home_team,
-                            "away_team": away_team,
-                            "duration": duration,
-                            "winner": home_team if status == "win" else away_team,
-                            "tier": tier,
-                            "tournament": tournament,
-                            "stage": stage,
-                            # "bracket": bracket_name
-                        })
-                
-                processed.add(current_url)
-            logging.info("scrape_match_detail method completed.")
-            return match_detail
-        
-        except Exception as e:
-            logging.error(f"Error occurs while executing scrape_match_detail method: {e}")
-            print("Error occurs while executing scrape_match_detail method")
-    
     def run(self):
         logging.info("Running run method of Tournament Scraper class.")
         tier = self.scrape_tier_page()
         tournament = self.scrape_tournament_page(tier)
         stage = self.scrape_stage_page(tournament)
-        match_detail = self.scrape_match_detail(stage)
-        save_csv(pd.DataFrame(match_detail), "match_details")
         logging.info("run method completed.")
         return stage
