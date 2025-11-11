@@ -1,4 +1,3 @@
-import json
 from urllib.parse import urlparse
 from constants.scraper_constant import *
 from logger import logging
