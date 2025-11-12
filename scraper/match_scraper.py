@@ -207,6 +207,15 @@ class MatchScraper:
                 is_group_stage = bool(get_item(soup, ".brkts-matchlist", exact=True))
                 logging.info(f"This tournament stage has {'Knockout and Group Stage' if is_knoutout==is_group_stage==True else 'Knoutout' if is_knoutout==True else 'Group Stage'} System.")
                 
+                if is_group_stage:
+                    logging.info(f"Scraping group stage matches ...")
+                    matches = get_item(soup, selector="div.brkts-matchlist-match.brkts-match-has-details.brkts-match-popup-wrapper")
+                    logging.info(f"Found {len(matches)} items for group stage match.")
+                    for match in matches:
+                        result = self.get_detail(match, tier=tier, tournament=tournament, stage=stage)
+                        for item in result:
+                            match_detail.append(item)
+                
                 if is_knoutout:
                     logging.info(f"Scraping knockout stage matches ...")
                     selectors = self.get_selector(soup=soup, selector='div.brkts-bracket-wrapper > div > div.brkts-round-body', stage=stage)
@@ -217,15 +226,6 @@ class MatchScraper:
                         match = get_item(soup, selector + " > div.brkts-match-has-details", exact=True)
                         logging.info(f"Found match: {match}.")
                         result = self.get_detail(match, tier, tournament, stage, bracket, level)
-                        for item in result:
-                            match_detail.append(item)
-                
-                if is_group_stage:
-                    logging.info(f"Scraping group stage matches ...")
-                    matches = get_item(soup, selector="div.brkts-matchlist-match.brkts-match-has-details.brkts-match-popup-wrapper")
-                    logging.info(f"Found {len(matches)} items for group stage match.")
-                    for match in matches:
-                        result = self.get_detail(match, tier=tier, tournament=tournament, stage=stage)
                         for item in result:
                             match_detail.append(item)
                 
