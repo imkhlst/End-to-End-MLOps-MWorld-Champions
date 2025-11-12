@@ -1,11 +1,12 @@
 import warnings
 from dateutil import parser
+from dateutil.parser import UnknownTimezoneWarning
 from urllib.parse import urlparse
 from constants.scraper_constant import *
 from logger import logging
 from utils.scraper_utils import *
 
-warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=UnknownTimezoneWarning)
 
 class MatchScraper:
     def __init__(self,
@@ -130,50 +131,58 @@ class MatchScraper:
 
             if is_autowin or is_empty_game:
                 logging.info(f"Auto-win/FF detected ({score_text}). Using fallback.")
-                if any(k in score_text for k in ["W", "Win", "Winner"]):
-                    winner = home_team
-                elif any(k in score_text for k in ["FF", "DQ"]):
-                    winner = away_team
-                else:
-                    winner = "Unknown"
+                return []
 
+            bans_item = get_item(popup, ".brkts-popup-mapveto__ban-round")
+            all_bans = []
+            for b in bans_item:
+                ban_heroes = [get_element(a, "title") for a in get_item(b, "a")]
+                all_bans.extend(ban_heroes)
+
+            logging.info(f"Found total {len(all_bans)} banned heroes: {all_bans}")
+
+            # Pisahkan ban untuk home dan away
+            if len(all_bans) >= 10:
+                home_bans, away_bans = all_bans[:5], all_bans[5:10]
+            else:
+                mid = len(all_bans) // 2
+                home_bans, away_bans = all_bans[:mid], all_bans[mid:]
+            logging.info(f"Home bans: {home_bans}, Away bans: {away_bans}")
+                
+            for i, game in enumerate(games, start=1):
+                duration = get_text(game)[:5].strip() or "00:00"
+                logging.info(f"Found duration game: {duration}.")
+                map_name = get_text(game)[5:].strip() or "Default"
+                logging.info(f"Found map name: {map_name}.")
+
+                icon = get_item(game, "i", exact=True)
+                classes = icon.get("class", []) if icon else []
+                status = "win" if "fa-check" in classes else "loss"
+
+                pick_heroes = [get_element(a, "title") for a in get_item(game, "a")]
+                logging.info(f"Found {len(pick_heroes)} heroes picked. {pick_heroes}.")
+                home_picks, away_picks = pick_heroes[:5], pick_heroes[5:]
+        
+                bans_item = get_item(popup, ".brkts-popup-mapveto__ban-round")
+                logging.info(f"Found {len(bans_item)} for bans.")
                 results.append({
                     "date": date,
+                    "game_num": i,
                     "home_team": home_team,
                     "away_team": away_team,
-                    "duration": "00:00",
-                    "map": "Unknown",
-                    "winner": winner,
+                    "home_picks": home_picks,
+                    "away_picks": away_picks,
+                    "home_bans": home_bans,
+                    "away_bans": away_bans,
+                    "duration": duration,
+                    "map": map_name,
+                    "winner": home_team if status == "win" else away_team,
                     "tier": tier,
                     "tournament": tournament,
                     "stage": stage,
                     "bracket": bracket,
                     "position": level
                 })
-
-            else:
-                # normal case (BO1, BO3, dst.)
-                for game in games:
-                    duration = get_text(game)[:5].strip() or "00:00"
-                    map_name = get_text(game)[5:].strip() or "Default"
-
-                    icon = get_item(game, "i", exact=True)
-                    classes = icon.get("class", []) if icon else []
-                    status = "win" if "fa-check" in classes else "loss"
-
-                    results.append({
-                        "date": date,
-                        "home_team": home_team,
-                        "away_team": away_team,
-                        "duration": duration,
-                        "map": map_name,
-                        "winner": home_team if status == "win" else away_team,
-                        "tier": tier,
-                        "tournament": tournament,
-                        "stage": stage,
-                        "bracket": bracket,
-                        "position": level
-                    })
             
             logging.info(f"get_detail method completed.")    
             return results
