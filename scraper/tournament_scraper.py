@@ -130,4 +130,4 @@ class TournamentScraper:
         tournament = self.scrape_tournament_page(tier)
         stage = self.scrape_stage_page(tournament)
         logging.info("run method completed.")
-        return stage
+        return tournament, stage
