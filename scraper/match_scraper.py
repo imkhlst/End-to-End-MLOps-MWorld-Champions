@@ -21,8 +21,8 @@ class MatchScraper:
                      soup,
                      selector,
                      stage,
-                     result: dict = None,
-                     depth=0):
+                     result: list = None,
+                     depth=0) -> list:
         logging.info("Running get_selector method of Match Scraper class.")
         try: 
             if result is None:
@@ -92,7 +92,7 @@ class MatchScraper:
                    tournament,
                    stage,
                    bracket = None,
-                   level = None):
+                   level = None) -> list:
         logging.info("Running get_detail method of Match Scraper class.")
         if bracket is None:
             bracket = "Group Stage"
