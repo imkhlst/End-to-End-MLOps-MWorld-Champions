@@ -131,5 +131,9 @@ class PlayerScraper:
     def run(self, url):
         logging.info("Running run method of Player Scraper class.")
         scrape_player = self.scrape_player(url)
-        save_csv(pd.DataFrame(scrape_player), "player")
+        save_csv(
+            dataframe = scrape_player,
+            filename = "player",
+            columns = ["player_name", "nasionality", "role", "team_name", "team_region"]
+        )
         logging.info("run method completed")
