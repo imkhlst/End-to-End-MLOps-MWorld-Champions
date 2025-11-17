@@ -34,10 +34,16 @@ def load_json(filename: str):
     logging.info("load_json method completed.")
     return data
 
-def save_csv(dataframe, filename: str):
+def save_csv(dataframe,
+             filename: str,
+             columns: list = None,
+             is_list_of_dict: bool = False) -> object:
     logging.info("Running save_csv method of utils.")
     if not isinstance(dataframe, pd.DataFrame):
-        dataframe = pd.DataFrame(dataframe)
+        if is_list_of_dict==True:
+            dataframe = pd.DataFrame(dataframe)
+        else:
+            dataframe = pd.DataFrame(dataframe, columns=columns)
     file = dataframe.to_csv(f"data/raw/{filename}.csv")
     logging.info(f"Your file has been save in /raw/{filename}.csv. save_csv method completed.")
     
@@ -113,9 +119,13 @@ def get_text(item) -> str:
 
 def get_element(item, element: str):
     try:
-        logging.info("Running get_attribut method of utils.")
+        logging.info("Running get_element method of utils.")
+        if not hasattr(item, "get"):
+            logging.info("get_element method completed.")
+            return None
+        
         text = item.get(element)
-        logging.info("get_attribut method completed.")
+        logging.info("get_element method completed.")
         return text
     
     except Exception as e:
