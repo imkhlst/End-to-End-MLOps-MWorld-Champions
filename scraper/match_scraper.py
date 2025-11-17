@@ -249,5 +249,5 @@ class MatchScraper:
     def run(self, url):
         logging.info("Running run method of Match Scraper class.")
         match_detail = self.scrape_match_detail(url)
-        save_csv(pd.DataFrame(match_detail), "match_detail")
+        save_csv(dataframe = match_detail, filename = "match_detail", is_list_of_dict=True)
         logging.info("run method completed.")
