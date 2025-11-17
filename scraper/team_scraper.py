@@ -1,4 +1,3 @@
-from urllib.parse import urlparse
 from constants.scraper_constant import *
 from logger import logging
 from utils.scraper_utils import *
@@ -44,7 +43,7 @@ class TeamScraper:
             logging.error(f"Error occur while executing get_player_detail method: {e}.")
             print("Error occur while executing get_player_detail method")
     
-    def scrape_player(self, url):
+    def scrape_team(self, url):
         logging.info("Running scrape_player method of Team Scraper class.")
         processed = set()
         queue = list(url) if isinstance(url, (set, list)) else [url]
@@ -80,10 +79,10 @@ class TeamScraper:
     
     def run(self, url):
         logging.info("Running run method of Team Scraper class.")
-        scrape_player = self.scrape_player(url)
+        scrape_team = self.scrape_team(url)
         save_csv(
-            dataframe = scrape_player,
-            filename = "team",
+            dataframe = scrape_team,
+            filename = "team_detail",
             columns = ["team_name", "team_region"]
         )
-        logging.info("run method completed")
+        logging.info("run method completed.")
