@@ -1,7 +1,6 @@
 import warnings
 from dateutil import parser
 from dateutil.parser import UnknownTimezoneWarning
-from urllib.parse import urlparse
 from constants.scraper_constant import *
 from logger import logging
 from utils.scraper_utils import *
@@ -249,5 +248,9 @@ class MatchScraper:
     def run(self, url):
         logging.info("Running run method of Match Scraper class.")
         match_detail = self.scrape_match_detail(url)
-        save_csv(dataframe = match_detail, filename = "match_detail", is_list_of_dict=True)
+        save_csv(
+            dataframe = match_detail,
+            filename = "match_detail",
+            is_list_of_dict=True
+        )
         logging.info("run method completed.")
