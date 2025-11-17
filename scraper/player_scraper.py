@@ -1,4 +1,3 @@
-from urllib.parse import urlparse
 from constants.scraper_constant import *
 from logger import logging
 from utils.scraper_utils import *
@@ -133,7 +132,7 @@ class PlayerScraper:
         scrape_player = self.scrape_player(url)
         save_csv(
             dataframe = scrape_player,
-            filename = "player",
+            filename = "player_detail",
             columns = ["player_name", "nasionality", "role", "team_name", "team_region"]
         )
-        logging.info("run method completed")
+        logging.info("run method completed.")
