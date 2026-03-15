@@ -30,13 +30,13 @@ class TournamentScraper:
                 logging.info("Fetching soup ...")
                 soup = get_soup(current_url)
                 logging.info("Soup Fetched, extracting items ...")
-                urls = get_url(soup, "tier")
+                urls = get_url(soup, "")
                 logging.info(f"Found {len(urls)} items for tier.")
                 for url in urls:
                     parse = urlparse(url).path
                     if any(t in parse.replace("/", " ") for t in self.tier):
                         logging.info(f"Get URL: {url}")
-                        result.append([parse.split("/")[-1][:6], url])
+                        result.append([parse.split("/")[-1], url])
                 
                 processed.add(current_url)
             
@@ -71,9 +71,9 @@ class TournamentScraper:
                 logging.info(f"Found {len(urls)} items for tournament.")
                 for url in urls:
                     parse = urlparse(url).path
-                    if any(t in parse.replace("/", " ").lower() for t in self.tournament):
-                            logging.info(f"Get URL: {url}")
-                            result.append([tier, " ".join(parse.split("/")[2:]).replace("_", " "), url])
+                    if any(t in parse.replace("/", " ").lower() for t in self.tournament) and "Qualifier" not in parse:
+                        logging.info(f"Get URL: {url}")
+                        result.append([tier, " ".join(parse.split("/")[2:]).replace("_", " "), url])
                 
                 processed.add(current_url)
             
@@ -109,11 +109,15 @@ class TournamentScraper:
                 logging.info(f"Found {len(urls)} items for stage.")
                 for url in urls:
                     parse = urlparse(url).path
-                    if any(t in parse.replace("/", " ").lower() for t in self.stage):
+                    if any(t in parse.replace("/", " ").lower() for t in ["Japan", "Mongolia", "ESN"]):
+                        if url.startswith(current_url) and "#" not in url:
+                            logging.info(f"Get URL: {url}")
+                            stage.append([tier, tournament, parse.split("/")[-2:].replace("_", " "), url])
+                    elif any(t in parse.replace("/", " ").lower() for t in self.stage):
                         if url.startswith(current_url) and "#" not in url:
                             logging.info(f"Get URL: {url}")
                             stage.append([tier, tournament, parse.split("/")[-1].replace("_", " "), url])
-            
+                            
                 processed.add(current_url)
             
             save_json(stage, "stage")
