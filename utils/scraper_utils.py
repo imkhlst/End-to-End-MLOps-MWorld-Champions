@@ -3,6 +3,7 @@ import random
 import time
 import json
 import pandas as pd
+import numpy as np
 import re
 import warnings
 from urllib.parse import urljoin
@@ -48,15 +49,15 @@ def save_csv(dataframe,
     logging.info(f"Your file has been save in /raw/{filename}.csv. save_csv method completed.")
     
 def get_soup(url: str,
-             HEADERS: dict = HEADERS,
+             HEADERS: dict = None,
              retry: int = 3,
-             delay_range = (2, 15)):
-    logging.info("Running get_soup method of utils.")
+             delay_range = (1, 5)):
+    session = requests.Session()
+    session.headers.update(headers=HEADERS)
     for attempt in range(retry):
         try:
-            response = session.get(url, headers=HEADERS, timeout=10)
+            response = session.get(url, timeout=10)
             response.raise_for_status()
-            logging.info("get_soup method completed.")
             return BeautifulSoup(response.content, "html.parser")
         
         except Exception as e:
@@ -68,7 +69,6 @@ def get_soup(url: str,
 
 def get_url(soup, keyword: str) -> set:
     try:
-        logging.info("Running get_url method of utils.")
         if soup is None:
             return set()
         url = set()
@@ -79,7 +79,6 @@ def get_url(soup, keyword: str) -> set:
                 if keyword.lower() in href.lower():
                     href = absolute(href)
                     url.add(href)
-        logging.info("get_url method completed.")
         return url
     
     except Exception as e:
@@ -88,9 +87,7 @@ def get_url(soup, keyword: str) -> set:
 
 def get_item(soup, selector: str, exact=False):
     try:
-        logging.info("Running get_item method of utils.")
         if soup is None:
-            logging.error("Failed to soup.")
             return []
         
         if exact==True:
@@ -98,8 +95,7 @@ def get_item(soup, selector: str, exact=False):
         
         else:
             items = soup.select(selector)
-            
-        logging.info("get_item method completed.")
+        
         return items
     
     except Exception as e:
@@ -108,9 +104,7 @@ def get_item(soup, selector: str, exact=False):
 
 def get_text(item) -> str:
     try:
-        logging.info("Running get_text method of utils.")
         text = item.get_text().encode('utf-8').decode('unicode_escape')
-        logging.info("get_text method completed.")
         return text
     
     except Exception as e:
@@ -119,39 +113,12 @@ def get_text(item) -> str:
 
 def get_element(item, element: str):
     try:
-        logging.info("Running get_element method of utils.")
         if not hasattr(item, "get"):
-            logging.info("get_element method completed.")
             return None
         
         text = item.get(element)
-        logging.info("get_element method completed.")
         return text
     
     except Exception as e:
         logging.error(f"Error occur when running get_element method: {e}")
         print("Error occur when running get_element method")
-    
-def get_selector(soup, selector, result=None):
-    try:
-        logging.info("Running get_selector method of utils.")
-        if result is None:
-            result = set()
-            
-        for h in soup.select(selector):
-            classes = h.get("class") or []
-            if any(re.search(r"(header|connector)", c) for c in classes):
-                continue
-            
-            new_selector = selector + f" > div.{classes[0]}"
-            if any(re.search(r"(center)", c) for c in classes):
-                result.add(new_selector)
-            
-            else:
-                get_selector(soup, new_selector, result)
-        
-        return result
-    
-    except Exception as e:
-        logging.error(f"Error occur when running get_selector method: {e}")
-        print("Error occur when running get_selector method")
