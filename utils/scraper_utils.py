@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import re
 import warnings
+from unidecode import unidecode
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from constants.scraper_constant import BASE_URL, HEADERS
@@ -45,7 +46,7 @@ def save_csv(dataframe,
             dataframe = pd.DataFrame(dataframe)
         else:
             dataframe = pd.DataFrame(dataframe, columns=columns)
-    file = dataframe.to_csv(f"data/raw/{filename}.csv")
+    file = dataframe.to_csv(f"data/raw/{filename}.csv", index=False)
     logging.info(f"Your file has been save in /raw/{filename}.csv. save_csv method completed.")
     
 def get_soup(url: str,
@@ -105,6 +106,7 @@ def get_item(soup, selector: str, exact=False):
 def get_text(item) -> str:
     try:
         text = item.get_text().encode('utf-8').decode('unicode_escape')
+        text = unidecode(text)
         return text
     
     except Exception as e:
