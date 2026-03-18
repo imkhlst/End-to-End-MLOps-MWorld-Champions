@@ -35,7 +35,7 @@ class MatchScraper:
             sibling = parent.find_previous_sibling("div")
 
             if not parent_classes:
-                return self.get_selector(soup=parent, selector=selector, depth=depth+1)
+                return self.get_bracket(soup=parent, selector=selector, depth=depth+1)
             
             if selector is None:
                 selector = f".{parent_classes[0]}"
@@ -64,7 +64,7 @@ class MatchScraper:
                     logging.info(f"Get_bracket completed. Found [{selector}] for {bracket} bracket.")
                     return bracket
             
-            return self.get_selector(soup=parent, selector=selector, depth=depth+1)
+            return self.get_bracket(soup=parent, selector=selector, depth=depth+1)
             
         except Exception as e:
             logging.error(f"Error occurs while executing get_bracket method: {e}")
@@ -90,12 +90,14 @@ class MatchScraper:
             date = date.date()
             logging.info(f"Found match time: {date}")
             
-            teams = get_item(popup, ".name.hidden-xs")
-            logging.info(f"Found {len(teams)} items for teams.")
-            home_team = get_text(teams[0])
-            logging.info(f"Found {home_team} items for home team.")
-            away_team = get_text(teams[1])
-            logging.info(f"Found {away_team} items for away team.")
+            team_name = get_item(popup, ".name.hidden-xs")
+            alias_name = get_item(popup, ".name.visible-xs")
+            home_name = get_text(team_name[0])
+            home_alias = get_text(alias_name[0])
+            logging.info(f"Found {home_name} as {home_alias} for home team.")
+            away_name = get_text(team_name[1])
+            away_alias = get_text(alias_name[1])
+            logging.info(f"Found {away_name} as {away_alias} for away team.")
             
             games = get_item(popup, ".brkts-popup-body-game")
             logging.info(f"Found {len(games)} game(s).")
@@ -155,8 +157,10 @@ class MatchScraper:
                 results.append({
                     "date": date,
                     "game_num": i,
-                    "home_team": home_team,
-                    "away_team": away_team,
+                    "home_team": home_name,
+                    "home_alias": home_alias,
+                    "away_team": away_name,
+                    "away_alias": away_alias,
                     "home_picks": home_picks,
                     "away_picks": away_picks,
                     "home_bans": home_bans[i-1] if i-1 < len(home_bans) else [],
@@ -221,7 +225,7 @@ class MatchScraper:
                     else:
                         for match in matches:
                             logging.info("Getting bracket from get_bracket method of Match Scraper class.")
-                            bracket = self.get_selector(soup=match)
+                            bracket = self.get_bracket(soup=match)
                             logging.info(f"Scraping matches ...")
                             result = self.get_detail(match, tier, tournament, stage, bracket)
                             for item in result:
