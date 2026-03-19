@@ -109,14 +109,15 @@ class TournamentScraper:
                 logging.info(f"Found {len(urls)} items for stage.")
                 for url in urls:
                     parse = urlparse(url).path
-                    if any(t in parse.replace("/", " ").lower() for t in ["Japan", "Mongolia", "ESN"]):
+                    if any(t in parse.replace("/", " ").lower() for t in self.stage):
                         if url.startswith(current_url) and "#" not in url:
-                            logging.info(f"Get URL: {url}")
-                            stage.append([tier, tournament, parse.split("/")[-2:].replace("_", " "), url])
-                    elif any(t in parse.replace("/", " ").lower() for t in self.stage):
-                        if url.startswith(current_url) and "#" not in url:
-                            logging.info(f"Get URL: {url}")
+                            logging.info(f"Stage found. Get URL: {url}")
                             stage.append([tier, tournament, parse.split("/")[-1].replace("_", " "), url])
+                    else:
+                        if [tier, tournament, "Knockout Stage", current_url] in stage:
+                            continue
+                        logging.info(f"Stage not found. Get URL: {current_url}")
+                        stage.append([tier, tournament, "Knockout Stage", current_url])
                             
                 processed.add(current_url)
             
