@@ -106,7 +106,7 @@ def get_item(soup, selector: str, exact=False):
 def get_text(item) -> str:
     try:
         text = item.get_text().encode('utf-8').decode('unicode_escape')
-        text = unidecode(text)
+        text = unidecode(text).strip()
         return text
     
     except Exception as e:
