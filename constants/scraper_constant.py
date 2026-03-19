@@ -21,8 +21,8 @@ TOURNAMENT_KEYWORDS = [
     "mpl latam season_4",
     "turkiye_championship season_5",
     "turkiye_championship season_6",
-    "mlbb_super_league season_1",
-    "mlbb_super_league season_2",
+    "mlbb_super_league myanmar season_1",
+    "mlbb_super_league myanmar season_2",
     "mlbb_continental_championships season_5",
     "mlbb_continental_championships season_6",
     "msc 2025 japan",
@@ -33,7 +33,8 @@ TOURNAMENT_KEYWORDS = [
     "vietnam_mlbb_championship 2025 winter",
     "vietnam_mlbb_championship 2025 spring",
     "mekong season_6",
-    "mekong season 5",
+    "mekong season_5",
+    "games_of_the_future 2025"
 ]
 
 STAGE_KEYWORD = [
