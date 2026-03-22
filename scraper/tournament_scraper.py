@@ -134,5 +134,9 @@ class TournamentScraper:
         tier = self.scrape_tier_page()
         tournament = self.scrape_tournament_page(tier)
         stage = self.scrape_stage_page(tournament)
+        save_csv(
+            dataframe = tournament,
+            filename = "tournament_detail",
+            is_list_of_dict=True)
         logging.info("run method completed.")
         return tournament, stage
