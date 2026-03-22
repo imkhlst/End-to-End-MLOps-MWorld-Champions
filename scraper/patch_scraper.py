@@ -1,6 +1,5 @@
 from dateutil import parser
 from logger import logging
-from constants.scraper_constant import *
 from utils.scraper_utils import *
 
 
@@ -41,8 +40,8 @@ class PatchScraper:
             return result
         
         except Exception as e:
-            logging.error(f"Error occur while executing scrape patch method: {e}.")
-            print("Error occur while executing scrape patch method")
+            logging.error(f"Error occur while executing scrape_patch method: {e}.")
+            print("Error occur while executing scrape_patch method")
     
     def run(self):
         logging.info("Running run method of Patch Scraper class.")
