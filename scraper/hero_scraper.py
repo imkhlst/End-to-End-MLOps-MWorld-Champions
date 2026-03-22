@@ -16,17 +16,19 @@ class HeroScraper:
                 logging.info("Soup Fetched, extracting items ...")
                 contents = get_item(soup, ".content3")
                 for content in contents:
-                    roles = get_item(content, "div", exact=True)
-                    role_name = get_text(roles)
-                    heroes = get_item(content, ".zoom-container")
-                    for hero in heroes:
-                        hero_name = get_text(hero)
-                        logging.info(f"Adding {hero_name} as {role_name} to result.")
-                        result.append({
-                            "hero_name": hero_name,
-                            "role_name": role_name
-                        })
+                    roles = get_item(content, ".white-text")
+                    for role in roles:
+                        role_name = get_text(role)[0]
+                        heroes = get_item(content, ".zoom-container")
+                        for hero in heroes:
+                            hero_name = get_text(hero)
+                            logging.info(f"Adding {hero_name} as {role_name} to result.")
+                            result.append({
+                                "hero_name": hero_name,
+                                "role_name": role_name
+                            })
             logging.info("Scrape_hero method completed.")
+            return list(result)
 
         except Exception as e:
             logging.error(f"Error occur while executing scrape_hero method: {e}.")
