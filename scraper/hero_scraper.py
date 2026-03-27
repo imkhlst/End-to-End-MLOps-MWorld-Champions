@@ -18,8 +18,8 @@ class HeroScraper:
                 for content in contents:
                     roles = get_item(content, ".white-text")
                     for role in roles:
-                        role_name = get_text(role)[0]
-                        heroes = get_item(content, ".zoom-container")
+                        role_name = get_text(role).split()[0]
+                        heroes = get_item(role, ".zoom-container")
                         for hero in heroes:
                             hero_name = get_text(hero)
                             logging.info(f"Adding {hero_name} as {role_name} to result.")
