@@ -24,10 +24,9 @@ class TeamScraper:
                     team_region = get_element(flag[0], "title")
                     logging.info(f"Found team region: {team_region}")
                 
-                team = get_item(card, "center > a[title]", exact=True)
+                team = get_item(card, "center > a", exact=True)
                 if team:
-                    team_name = get_element(team, "title")
-                    team_name = re.sub(r"\(.*?\)", "", team_name).strip()
+                    team_name = get_text(team)
                     logging.info(f"Found team name: {team_name}")
                 
                 if not team_name:
