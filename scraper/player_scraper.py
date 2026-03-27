@@ -43,25 +43,25 @@ class PlayerScraper:
                     rows = get_item(table, "tr")
                     logging.info(f"Found {len(rows)} player.")
                     for row in rows:
-                        role = None
-                        nationality = None
+                        player_role = None
+                        player_nationality = None
                         player_name = None
                         
-                        img = get_item(row, "img[title]", exact=True)
-                        if img:
-                            role = get_element(img, "title")
-                            if role and "Middle" in role:
-                                role = role.replace("Middle", "Mid Lane")
+                        role = get_item(row, "img[title]", exact=True)
+                        if role:
+                            player_role = get_element(role, "title")
+                            if player_role and "Middle" in player_role:
+                                player_role = player_role.replace("Middle", "Mid Lane")
                             
-                            if not any(r in role for r in self.role):
+                            if not any(r in player_role for r in self.role):
                                 continue
                             
-                            logging.info(f"Found player role: {role}")
+                            logging.info(f"Found player role: {player_role}")
                         
                         flag = get_item(row, "span.flag a[title]", exact=True)
                         if flag:
-                            nationality = get_element(flag, "title")
-                            logging.info(f"Found player nationality: {nationality}")
+                            player_nationality = get_element(flag, "title").lower()
+                            logging.info(f"Found player nationality: {player_nationality}")
                         
                         player = get_item(row, "a[title]")
                         if player and len(player) > 1:
@@ -71,7 +71,8 @@ class PlayerScraper:
                             player_name = get_element(player[-1], "title")
                             
                             if player_name:
-                                player_name = re.sub(r"\(.*?\)", "", player_name).strip()
+                                player_name = re.sub(r"\(.*?\)", "", player_name)
+                                player_name = re.sub(r"\.", "", player_name).strip().lower()
                             
                             if player_name and ":" in player_name:
                                 player_name = player_name.split(":", 1)[1]
@@ -83,8 +84,8 @@ class PlayerScraper:
                         if not player_name:
                             continue
                         
-                        logging.info(f"Player info added: {player_name, nationality, role, team_name, team_region}")
-                        result.add((player_name, nationality, role, team_name, team_region))
+                        logging.info(f"Player info added: {player_name, player_nationality, player_role, team_name, team_region}")
+                        result.add((player_name, player_nationality, player_role, team_name, team_region))
             
             logging.info("get_player_detail method completed.")            
             return list(result)
@@ -103,10 +104,6 @@ class PlayerScraper:
             for item in queue:
                 logging.info(f"Found item: {item}")
                 tier = item[0]
-                if "S-Tier" in tier or any(k in tier.lower() for k in ["invitational", "snapdragon"]):
-                    logging.info(f"Skipping tournament tier: {tier}")
-                    continue
-                
                 current_url = item[2]
                 logging.info(f"Scraping URL: {current_url}")
                 if current_url in processed:
@@ -133,6 +130,6 @@ class PlayerScraper:
         save_csv(
             dataframe = scrape_player,
             filename = "player_detail",
-            columns = ["player_name", "nasionality", "role", "team_name", "team_region"]
+            columns = ["player_name", "player_nationality", "player_role", "team_name", "team_region"]
         )
         logging.info("run method completed.")
