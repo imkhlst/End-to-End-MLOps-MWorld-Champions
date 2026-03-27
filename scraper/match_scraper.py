@@ -145,9 +145,9 @@ class MatchScraper:
                 map_name = get_text(game)[5:].strip() or "Default"
                 logging.info(f"Found map name: {map_name}.")
 
-                icon = get_item(game, ".brkts-result-label", exact=True)
+                icon = get_item(game, ".generic-label", exact=True)
                 logging.info(f"Found icon: {icon}.")
-                classes = icon.get("class", []) if icon else []
+                classes = icon.get("data-label-type", []) if icon else []
                 logging.info(f"Found classes: {classes}.")
 
                 pick_heroes = [get_element(a, "title") for a in get_item(game, "a")]
@@ -167,8 +167,8 @@ class MatchScraper:
                     "away_bans": away_bans[i-1] if i-1 < len(away_bans) else [],
                     "duration": duration,
                     "map": map_name,
-                    "home_status": "win" if any(c.endswith("win") for c in classes) else "loss",
-                    "away_status": "win" if any(c.endswith("loss") for c in classes) else "loss",
+                    "home_status": "win" if "win" in classes else "loss",
+                    "away_status": "loss" if "win" in classes else "win",
                     "tier": tier,
                     "tournament": tournament,
                     "stage": stage,
