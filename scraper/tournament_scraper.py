@@ -113,11 +113,12 @@ class TournamentScraper:
                         if url.startswith(current_url) and "#" not in url:
                             logging.info(f"Stage found. Get URL: {url}")
                             stage.append([tier, tournament, parse.split("/")[-1].replace("_", " "), url])
+                    elif any(t in parse.replace("/", " ").lower() for t in ["japan", "mongolia", "esn"]):
+                        if url.startswith(current_url) and "#" not in url:
+                            logging.info(f"Stage found. Get URL: {url}")
+                            stage.append([tier, tournament, "Knockout Stage", url])
                     else:
-                        if [tier, tournament, "Knockout Stage", current_url] in stage:
-                            continue
-                        logging.info(f"Stage not found. Get URL: {current_url}")
-                        stage.append([tier, tournament, "Knockout Stage", current_url])
+                        continue
                             
                 processed.add(current_url)
             
