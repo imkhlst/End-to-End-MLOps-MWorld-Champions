@@ -32,10 +32,10 @@ class MatchScraper:
             
             parent_classes = parent.get("class") or []
 
-            sibling = parent.find_previous_sibling("div")
-
             if not parent_classes:
                 return self.get_bracket(soup=parent, selector=selector, depth=depth+1)
+            
+            sibling = parent.find_previous_sibling("div")
             
             if selector is None:
                 selector = f".{parent_classes[0]}"
@@ -63,6 +63,29 @@ class MatchScraper:
                     
                     logging.info(f"Get_bracket completed. Found [{selector}] for {bracket} bracket.")
                     return bracket
+                
+                sibling = sibling.find_previous_sibling("div")
+                if sibling:
+                    sibling_classes = sibling.get("class") or []
+                    if any(c.endswith("header") for c in sibling_classes):
+                        depth_to_level ={
+                            1: "Grand Final",
+                            3: "Final",
+                            5: "Semi-Final",
+                            7: "Quarter-Final",
+                            9: "Round 1",
+                        }
+                        level = depth_to_level.get(depth)
+
+                        if "upper" in sibling.get_text().lower() and depth > 1:
+                            bracket = f"Upper {level}"
+                        elif "lower" in sibling.get_text().lower() and depth > 1:
+                            bracket = f"Lower {level}"
+                        else:
+                            bracket = f"{level}"
+                        
+                        logging.info(f"Get_bracket completed. Found [{selector}] for {bracket} bracket.")
+                        return bracket
             
             return self.get_bracket(soup=parent, selector=selector, depth=depth+1)
             
@@ -141,13 +164,19 @@ class MatchScraper:
             for i, game in enumerate(games, start=1):
                 time = get_text(game)[:5].strip()
                 duration = time if re.match(r'^\d{1,2}:\d{2}$', time) else np.nan
-                logging.info(f"Found duration game: {duration}.")
                 map_name = get_text(game)[5:].strip() or "Default"
+                if ":" not in time:
+                    duration = "undefined"
+                    map_name = "undefined"
+                logging.info(f"Found duration game: {duration}.")
                 logging.info(f"Found map name: {map_name}.")
 
                 icon = get_item(game, ".generic-label", exact=True)
-                logging.info(f"Found icon: {icon}.")
                 classes = icon.get("data-label-type", []) if icon else []
+                if icon is None:
+                    icon = get_item(game, ".brkts-result-label", exact=True)
+                    classes = icon.get("class", []) if icon else []
+                logging.info(f"Found icon: {icon}.")
                 logging.info(f"Found classes: {classes}.")
 
                 pick_heroes = [get_element(a, "title") for a in get_item(game, "a")]
@@ -167,8 +196,8 @@ class MatchScraper:
                     "away_bans": away_bans[i-1] if i-1 < len(away_bans) else [],
                     "duration": duration,
                     "map": map_name,
-                    "home_status": "win" if "win" in classes else "loss",
-                    "away_status": "loss" if "win" in classes else "win",
+                    "home_status": "win" if "win" in classes or any("win" in t.lower() for t in classes) else "loss",
+                    "away_status": "loss" if "win" in classes or any("win" in t.lower() for t in classes) else "win",
                     "tier": tier,
                     "tournament": tournament,
                     "stage": stage,
