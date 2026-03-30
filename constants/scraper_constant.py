@@ -29,7 +29,7 @@ TOURNAMENT_KEYWORDS = [
     "m7_world_championship japan",
     "msc 2025 mongolia",
     "esn national_championship 2025",
-    "mlbb_china_masters",
+    "mlbb_china_masters season_1",
     "vietnam_mlbb_championship 2025 winter",
     "vietnam_mlbb_championship 2025 spring",
     "mekong season_6",
