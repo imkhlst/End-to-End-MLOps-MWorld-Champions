@@ -18,7 +18,7 @@ class MatchScraper:
     
     def get_bracket(self,
                      soup,
-                     selector = None,
+                     selector=None,
                      depth=0,
                      max_depth=15) -> list:
         try:
@@ -123,6 +123,8 @@ class MatchScraper:
             logging.info(f"Found {away_name} as {away_alias} for away team.")
             
             games = get_item(popup, ".brkts-popup-body-game")
+            if len(games) == 0:
+                games = get_item(popup, ".brkts-popup-body-grid-row")
             logging.info(f"Found {len(games)} game(s).")
 
             # ambil teks score atau result
@@ -162,12 +164,19 @@ class MatchScraper:
             logging.info(f"Home bans: {home_bans}, Away bans: {away_bans}")
                 
             for i, game in enumerate(games, start=1):
-                time = get_text(game)[:5].strip()
-                duration = time if re.match(r'^\d{1,2}:\d{2}$', time) else np.nan
-                map_name = get_text(game)[5:].strip() or "Default"
-                if ":" not in time:
-                    duration = "undefined"
-                    map_name = "undefined"
+                time = get_item(game, ".brkts-popup-body-grid-row-detail", exact=True)
+                if not time:
+                    time = get_item(game, ".brkts-popup-spaced", exact=True)
+                duration = get_text(time)
+                map_name = "default"
+                map = get_item(game, ".brkts-popup-comment", exact=True)
+                if map:
+                    map_name = get_text(map)
+                    if map_name == "":
+                        map_name = "unknown"
+                if ":" not in duration:
+                    duration = "unknown"
+                    map_name = "unknown"
                 logging.info(f"Found duration game: {duration}.")
                 logging.info(f"Found map name: {map_name}.")
 
