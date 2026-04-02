@@ -13,7 +13,7 @@ class TournamentScraper:
         self.tournament = tournament
         self.stage = stage
         self.tier = tier
-        self.portal = get_url(get_soup(base_url), "portal:tournament")
+        self.portal = get_url(get_soup(base_url), "portal:tournaments")
         
     def scrape_tier_page(self) -> list:
         logging.info("Running scrape_tier_page method of Tournament Scraper class.")
@@ -34,7 +34,7 @@ class TournamentScraper:
                 logging.info(f"Found {len(urls)} items for tier.")
                 for url in urls:
                     parse = urlparse(url).path
-                    if any(t in parse.replace("/", " ") for t in self.tier):
+                    if any(t in parse.replace("/", " ").lower() for t in self.tier):
                         logging.info(f"Get URL: {url}")
                         result.append([parse.split("/")[-1], url])
                 
@@ -91,7 +91,7 @@ class TournamentScraper:
         queue = list(url) if isinstance(url, (set, list)) else [url]
         print(f"Queue: {queue[:3]}")
         try:
-            stage = []
+            result = []
             for item in queue:
                 logging.info(f"Found item: {item}")
                 tier = item[0]
@@ -107,23 +107,24 @@ class TournamentScraper:
                 logging.info("Soup Fetched, extracting items ...")
                 urls = get_url(soup, "")
                 logging.info(f"Found {len(urls)} items for stage.")
+                stage = []
                 for url in urls:
                     parse = urlparse(url).path
                     if any(t in parse.replace("/", " ").lower() for t in self.stage):
-                        if url.startswith(current_url) and "#" not in url:
-                            logging.info(f"Stage found. Get URL: {url}")
-                            stage.append([tier, tournament, parse.split("/")[-1].replace("_", " "), url])
-                    else:
-                        if [tier, tournament, "Knockout Stage", current_url] in stage:
+                        if "Mongolia" in current_url:
                             continue
-                        logging.info(f"Stage found. Get URL: {current_url} representing stage url.")
-                        stage.append([tier, tournament, "Knockout Stage", current_url])
-                            
+                        logging.info(f"Stage found. Get URL: {url}")
+                        stage.append([tier, tournament, parse.split("/")[-1].replace("_", " "), url])
+                
+                if not any(link.startswith(current_url) for [ _, _, _, link] in stage):
+                    stage.append([tier, tournament, "Knockout Stage", current_url])
+                
+                result.extend(stage)
                 processed.add(current_url)
             
-            save_json(stage, "stage")
+            save_json(result, "stage")
             logging.info("scrape_stage_page method completed.")
-            return list(stage)
+            return list(result)
         
         except Exception as e:
             logging.error(f"Error occurs while executing scrape_stage_page method: {e}")
