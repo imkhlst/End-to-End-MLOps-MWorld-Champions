@@ -49,9 +49,9 @@ class PlayerScraper:
                         
                         role = get_item(row, "img[title]", exact=True)
                         if role:
-                            player_role = get_element(role, "title")
-                            if player_role and "Middle" in player_role:
-                                player_role = player_role.replace("Middle", "Mid Lane")
+                            player_role = get_element(role, "title").lower()
+                            if player_role and "middle" in player_role:
+                                player_role = player_role.replace("middle", "mid lane")
                             
                             if not any(r in player_role for r in self.role):
                                 continue
