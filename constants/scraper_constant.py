@@ -50,6 +50,6 @@ STAGE_KEYWORD = [
     "stage_2"
 ]
 
-TOURNAMENT_TIER = ["S-Tier", "A-Tier", "B-Tier", "Qualifier_Tournaments"]
+TOURNAMENT_TIER = ["s-tier", "a-tier", "b-tier", "qualifier_tournaments"]
 
-ROLE_KEYWORD = ["Jungler", "Roamer", "Gold Lane", "EXP Lane", "Mid Lane"]
+ROLE_KEYWORD = ["jungler", "roamer", "gold lane", "exp lane", "mid lane"]
