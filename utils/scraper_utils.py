@@ -52,13 +52,17 @@ def save_csv(dataframe,
 def get_soup(url: str,
              HEADERS: dict = None,
              retry: int = 3,
-             delay_range = (1, 5)):
+             delay_range = (5, 10)):
     session = requests.Session()
     session.headers.update(headers=HEADERS)
     for attempt in range(retry):
         try:
             response = session.get(url, timeout=10)
             response.raise_for_status()
+            if response.status_code == 429:
+                time.sleep(600)
+                continue
+            time.sleep(random.uniform(55, 65))
             return BeautifulSoup(response.content, "html.parser")
         
         except Exception as e:
