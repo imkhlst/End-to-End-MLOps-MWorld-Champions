@@ -6,39 +6,29 @@ from utils.scraper_utils import *
 
 class TournamentScraper:
     def __init__(self,
-                 base_url: str = BASE_URL,
                  tournament: list = TOURNAMENT_KEYWORDS,
                  stage: list = STAGE_KEYWORD,
                  tier: list = TOURNAMENT_TIER):
         self.tournament = tournament
         self.stage = stage
         self.tier = tier
-        self.portal = get_url(get_soup(base_url), "portal:tournaments")
+        self.portal = urljoin(base=BASE_URL, url="/mobilelegends/Portal:Tournaments")
         
     def scrape_tier_page(self) -> list:
         logging.info("Running scrape_tier_page method of Tournament Scraper class.")
-        processed = set()
-        queue = list(self.portal)
+        queue = self.portal
+        result = []
         try:
-            result = []
-            for current_url in queue:
-                logging.info(f"Scraping URL: {current_url}")
-                if current_url in processed:
-                    logging.info(f"Already scraping URL: {current_url}")
-                    continue
-                
-                logging.info("Fetching soup ...")
-                soup = get_soup(current_url)
-                logging.info("Soup Fetched, extracting items ...")
-                urls = get_url(soup, "")
-                logging.info(f"Found {len(urls)} items for tier.")
-                for url in urls:
-                    parse = urlparse(url).path
-                    if any(t in parse.replace("/", " ").lower() for t in self.tier):
-                        logging.info(f"Get URL: {url}")
-                        result.append([parse.split("/")[-1], url])
-                
-                processed.add(current_url)
+            soup = get_soup(queue)
+            logging.info("Soup Fetched, extracting items ...")
+            content = soup.select_one(".nav-tabs")
+            urls = get_url(content)
+            logging.info(f"Found {len(urls)} items for tier.")
+            for url in urls:
+                parse = urlparse(url).path
+                if any(t in parse.replace("/", " ").lower() for t in self.tier):
+                    logging.info(f"Get URL: {url}")
+                    result.append([parse.split("/")[-1], url])
             
             save_json(result, "tier")
             logging.info("scrape_tier_page method completed.")
@@ -67,7 +57,12 @@ class TournamentScraper:
                 logging.info("Fetching soup ...")
                 soup = get_soup(current_url)
                 logging.info("Soup Fetched, extracting items ...")
-                urls = get_url(soup, "")
+                urls = []
+                item = soup.select("tr.table2__row--body")
+                for i in item:
+                    content = get_url(i)
+                    urls.extend(content)
+
                 logging.info(f"Found {len(urls)} items for tournament.")
                 for url in urls:
                     parse = urlparse(url).path
@@ -105,18 +100,20 @@ class TournamentScraper:
                 logging.info("Fetching soup ...")
                 soup = get_soup(current_url)
                 logging.info("Soup Fetched, extracting items ...")
-                urls = get_url(soup, "")
+                content = soup.select_one(".nav-tabs")
+                urls = get_url(content)
                 logging.info(f"Found {len(urls)} items for stage.")
                 stage = []
                 for url in urls:
                     parse = urlparse(url).path
                     if any(t in parse.replace("/", " ").lower() for t in self.stage):
-                        if "Mongolia" in current_url:
+                        if "#" in url:
                             continue
                         logging.info(f"Stage found. Get URL: {url}")
                         stage.append([tier, tournament, parse.split("/")[-1].replace("_", " "), url])
                 
-                if not any(link.startswith(current_url) for [ _, _, _, link] in stage):
+                link = urlparse(current_url).path
+                if not any(link.split("/")[-1] for [ _, _, _, link] in stage):
                     stage.append([tier, tournament, "Knockout Stage", current_url])
                 
                 result.extend(stage)
