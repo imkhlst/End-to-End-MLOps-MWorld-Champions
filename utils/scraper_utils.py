@@ -62,7 +62,7 @@ def get_soup(url: str,
             if response.status_code == 429:
                 time.sleep(600)
                 continue
-            time.sleep(random.uniform(55, 65))
+            time.sleep(random.uniform(25, 35))
             return BeautifulSoup(response.content, "html.parser")
         
         except Exception as e:
@@ -72,19 +72,20 @@ def get_soup(url: str,
     print(f"Failed to get soup from {url} after {retry} attempts.")
     return None
 
-def get_url(soup, keyword: str) -> set:
+def get_url(content) -> set:
     try:
-        if soup is None:
+        if content is None:
             return set()
-        url = set()
-        content = soup.find(id="mw-content-text")
-        for a in content.find_all("a", href=True):
-            href = a["href"]
-            if href.startswith("/mobilelegends/") or href.startswith("/"):
-                if keyword.lower() in href.lower():
-                    href = absolute(href)
-                    url.add(href)
-        return url
+        results = set()
+        item = content.select("a")
+        for i in item:
+            href = i.get("href")
+            if href:
+                if href.startswith("/mobilelegends/") or href.startswith("/"):
+                    url = absolute(href)
+                    results.add(url)
+        return list(results)
+        
     
     except Exception as e:
         logging.error(f"Error occur when running get_url method: {e}")
