@@ -6,13 +6,15 @@ from utils.scraper_utils import *
 class TeamScraper:
     def __init__(self):
         pass
-    
+    # need updated
     def get_team_detail(self, soup) -> list:
         logging.info("Running get_team_detail method of Team Scraper class.")
         result = set()
         try:
             region = get_item(soup, ".fo-nttax-infobox", exact=True)
             cards = get_item(soup, ".teamcard.toggle-area")
+            if not cards:
+                get_item(soup, ".team-participant-card__opponent-compact")
             logging.info(f"Found {len(cards)} teams.")
             for card in cards:
     
@@ -25,9 +27,8 @@ class TeamScraper:
                     logging.info(f"Found team region: {team_region}")
                 
                 team = get_item(card, "center > a", exact=True)
-                if team:
-                    team_name = get_text(team)
-                    logging.info(f"Found team name: {team_name}")
+                team_name = get_text(team)
+                logging.info(f"Found team name: {team_name}")
                 
                 if not team_name:
                     continue
