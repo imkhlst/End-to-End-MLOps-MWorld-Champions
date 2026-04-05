@@ -247,7 +247,7 @@ class MatchScraper:
                     text = get_text(i)
                     context.append(text)
                 is_elimination = any("elimination" in t.lower() for t in context)
-                is_round_robin = any("round robin" in t.lower() for t in context)
+                is_round_robin = any("robin" in t.lower() for t in context)
                 is_swiss = any("swiss" in t.lower() for t in context)
                 logging.info(f"This tournament stage has {'Elimination/Round Robin' if is_elimination==True and is_round_robin==True else 'Elimination' if is_elimination==True else 'Round Robin' if is_round_robin==True else 'Swiss' if is_swiss==True else 'GSL'} Format.")
                 
