@@ -213,7 +213,7 @@ class MatchScraper:
                     "bracket": bracket
                 })
             
-            logging.info(f"get_detail method completed.")    
+            logging.info(f"get_detail method completed. get {len(results)} game total for details.")    
             return results
         
         except Exception as e:
@@ -247,14 +247,14 @@ class MatchScraper:
                     text = get_text(i)
                     context.append(text)
                 is_elimination = any("elimination" in t.lower() for t in context)
-                logging.info(f"This tournament stage has {'Elimination' if is_elimination==True else 'Round Robin'} Format.")
+                logging.info(f"This tournament stage has {'Elimination Format' if is_elimination==True else 'Round Robin / GSL Format'} Format.")
                 
                 if is_elimination==True:
                     matches = get_item(soup, selector="div.brkts-match")
                     logging.info(f"Get_item completed. Found match: {len(matches)}.")
                     if not matches:
                         logging.info(f"Running get_item method from scraper_utils. Scraping round robin matches ...")
-                        matches = get_item(soup, selector="div.brkts-match-has-details")
+                        matches = get_item(soup, selector="div.brkts-matchlist-match")
                         logging.info(f"Get_item method completed. Found {len(matches)} matches.")
                         for match in matches:
                             result = self.get_detail(match, tier, tournament, stage, bracket=stage)
@@ -271,11 +271,11 @@ class MatchScraper:
                     
                 else:
                     logging.info(f"Running get_item method from scraper_utils. Scraping round robin matches ...")
-                    matches = get_item(soup, selector="div.brkts-match-has-details")
+                    matches = get_item(soup, selector=".brkts-matchlist-match")
                     logging.info(f"Get_item method completed. Found {len(matches)} matches.")
                     for match in matches:
                         logging.info(f"Scraping matches ...")
-                        result = self.get_detail(match, tier, tournament, stage, bracket=stage)
+                        result = self.get_detail(match, tier, tournament, stage, bracket="Group Stage")
                         for item in result:
                             match_detail.append(item)
                 
