@@ -247,20 +247,34 @@ class MatchScraper:
                     text = get_text(i)
                     context.append(text)
                 is_elimination = any("elimination" in t.lower() for t in context)
-                logging.info(f"This tournament stage has {'Elimination Format' if is_elimination==True else 'Round Robin / GSL Format'} Format.")
+                is_round_robin = any("round robin" in t.lower() for t in context)
+                is_swiss = any("swiss" in t.lower() for t in context)
+                logging.info(f"This tournament stage has {'Elimination/Round Robin' if is_elimination==True and is_round_robin==True else 'Elimination' if is_elimination==True else 'Round Robin' if is_round_robin==True else 'Swiss' if is_swiss==True else 'GSL'} Format.")
                 
-                if is_elimination==True:
+                if is_round_robin or is_swiss:
+                    logging.info(f"Running get_item method from scraper_utils. Scraping round robin / swiss matches ...")
+                    matches = get_item(soup, selector=".brkts-matchlist-match")
+                    logging.info(f"Get_item method completed. Found {len(matches)} matches.")
+                    for match in matches:
+                        logging.info(f"Scraping matches ...")
+                        result = self.get_detail(match, tier, tournament, stage, bracket="Group Stage")
+                        for item in result:
+                            match_detail.append(item)
+
+                if is_elimination:
                     matches = get_item(soup, selector="div.brkts-match")
-                    logging.info(f"Get_item completed. Found match: {len(matches)}.")
                     if not matches:
                         logging.info(f"Running get_item method from scraper_utils. Scraping round robin matches ...")
                         matches = get_item(soup, selector="div.brkts-matchlist-match")
                         logging.info(f"Get_item method completed. Found {len(matches)} matches.")
                         for match in matches:
+                            logging.info(f"Scraping matches ...")
                             result = self.get_detail(match, tier, tournament, stage, bracket=stage)
                             for item in result:
                                 match_detail.append(item)
                     else:
+                        logging.info(f"Running get_item method from scraper_utils. Scraping elimination matches ...")
+                        logging.info(f"Get_item completed. Found match: {len(matches)} matches.")
                         for match in matches:
                             logging.info("Getting bracket from get_bracket method of Match Scraper class.")
                             bracket = self.get_bracket(soup=match)
@@ -268,14 +282,16 @@ class MatchScraper:
                             result = self.get_detail(match, tier, tournament, stage, bracket)
                             for item in result:
                                 match_detail.append(item)
-                    
+
                 else:
-                    logging.info(f"Running get_item method from scraper_utils. Scraping round robin matches ...")
-                    matches = get_item(soup, selector=".brkts-matchlist-match")
+                    logging.info(f"Running get_item method from scraper_utils. Scraping GSL matches ...")
+                    matches = get_item(soup, selector="div.brkts-match")
                     logging.info(f"Get_item method completed. Found {len(matches)} matches.")
                     for match in matches:
+                        logging.info("Getting bracket from get_bracket method of Match Scraper class.")
+                        bracket = self.get_bracket(soup=match)
                         logging.info(f"Scraping matches ...")
-                        result = self.get_detail(match, tier, tournament, stage, bracket="Group Stage")
+                        result = self.get_detail(match, tier, tournament, stage, bracket)
                         for item in result:
                             match_detail.append(item)
                 
