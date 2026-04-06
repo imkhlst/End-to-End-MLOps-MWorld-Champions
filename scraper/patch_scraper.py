@@ -28,7 +28,7 @@ class PatchScraper:
                     date = item.find_parent("td").find_next_sibling("td")
                     date = get_text(date)
                     date = parser.parse(date)
-                    date = date.date()
+                    date = date.date().strftime("%d-%m-%Y")
                     logging.info(f"Found release date: {date}.")
                     result.append({
                         "patch": patch,
