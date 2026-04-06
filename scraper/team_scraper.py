@@ -14,7 +14,7 @@ class TeamScraper:
             region = get_item(soup, ".fo-nttax-infobox", exact=True)
             cards = get_item(soup, ".teamcard.toggle-area")
             if not cards:
-                get_item(soup, ".team-participant-card__opponent-compact")
+                cards = get_item(soup, ".team-participant-card__opponent-compact")
             logging.info(f"Found {len(cards)} teams.")
             for card in cards:
     
@@ -27,6 +27,8 @@ class TeamScraper:
                     logging.info(f"Found team region: {team_region}")
                 
                 team = get_item(card, "center > a", exact=True)
+                if card:
+                    team = card.select_one("span.name a")
                 team_name = get_text(team)
                 logging.info(f"Found team name: {team_name}")
                 
