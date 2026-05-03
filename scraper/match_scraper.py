@@ -105,39 +105,100 @@ class MatchScraper:
             popup = get_item(soup, ".brkts-popup", exact=True)
             logging.info(f"Found {popup}.")
             logging.info(f"Found {len(popup)} items for popup.")
-            timestamp = get_item(popup, selector=".timer-object-datetime-only", exact=True)
+            timestamp = get_item(popup, ".timer-object-datetime-only", exact=True)
             logging.info(f"Found {timestamp}.")
             logging.info(f"Found {len(timestamp)} items for timestamp.")
             date = get_text(timestamp)
-            date = parser.parse(date)
-            date = date.date()
+            # date = parser.parse(date)
+            # date = date.date()
             logging.info(f"Found match time: {date}")
             
-            team_name = get_item(popup, ".name.hidden-xs")
-            alias_name = get_item(popup, ".name.visible-xs")
-            home_name = get_text(team_name[0])
-            home_alias = get_text(alias_name[0])
+            team_list = get_item(popup, ".name.visible-xs a")
+            # alias_name = get_item(popup, ".name.visible-xs")
+            home_href = get_element(team_list[0], "href")
+            if "index" in home_href:
+                home_name = get_element(team_list[0], "title")
+
+            else:
+                home_url = absolute(home_href)
+                home_soup = get_soup(home_url)
+                name_box = get_item(home_soup, "h1.firstHeading", exact=True)
+                home_name = get_text(name_box)
+            
+            home_name = re.sub(r"\(.*?\)", "", home_name).strip()
+            home_alias = get_text(team_list[0])
             logging.info(f"Found {home_name} as {home_alias} for home team.")
-            away_name = get_text(team_name[1])
-            away_alias = get_text(alias_name[1])
+
+            away_href = get_element(team_list[1], "href")
+            if "index" in away_href:
+                away_name = get_element(team_list[1], "title")
+
+            else:
+                away_url = absolute(away_href)
+                away_soup = get_soup(away_url)
+                name_box = get_item(away_soup, "h1.firstHeading", exact=True)
+                away_name = get_text(name_box)
+            
+            away_name = re.sub(r"\(.*?\)", "", away_name).strip()
+            away_alias = get_text(team_list[1])
             logging.info(f"Found {away_name} as {away_alias} for away team.")
             
             games = get_item(popup, ".brkts-popup-body-game")
             if len(games) == 0:
                 games = get_item(popup, ".brkts-popup-body-grid-row")
+                if len(games) == 0:
+                    score_box = popup.select(".match-info-header-scoreholder-upper")
+                    bo_box = popup.select(".match-info-header-scoreholder-lower")
+
+                    # cek apakah ini auto-win atau win by
+                    score_text = get_text(score_box).strip() if score_box else ""
+                    is_autowin = any(k in score_text for k in ["Win", "Winner", "FF", "DQ"])
+
+                    if is_autowin:
+                        logging.info(f"Auto-win/FF detected ({score_text}). Winner takes full score.")
+                        total_game = int(get_text(bo_box)[-2]) - 1
+                    
+                    else:
+                        logging.info(f"This match does not have a statistic record.")
+                        total_game = int(score_text[0]) + int(score_text[2])
+
+                    for i in range(0, total_game):
+                        results.append({
+                            "date": date,
+                            "game_num": i,
+                            "home_team": home_name,
+                            "home_alias": home_alias,
+                            "away_team": away_name,
+                            "away_alias": away_alias,
+                            "home_picks": [],
+                            "away_picks": [],
+                            "home_bans": [],
+                            "away_bans": [],
+                            "duration": np.nan,
+                            "map": np.nan,
+                            "home_status": "win" if any(t in ["1", "W", "Win", "Winner"] for t in score_box[0].get_text()) else "loss",
+                            "away_status": "loss" if any(t in ["1", "W", "Win", "Winner"] for t in score_box[0].get_text()) else "win",
+                            "tier": tier,
+                            "tournament": tournament,
+                            "stage": stage,
+                            "bracket": bracket
+                        })
+                        logging.info(f"get_detail method completed. get {len(results)} game total for details.")    
+                        return results
+                    
             logging.info(f"Found {len(games)} game(s).")
 
-            # ambil teks score atau result
-            score_el = get_item(popup, ".match-info-header-scoreholder-upper", exact=True)
-            score_text = get_text(score_el).strip() if score_el else ""
+            # # ambil teks score atau result
+            # score_el = get_item(popup, ".match-info-header-scoreholder-upper", exact=True)
+            # score_text = get_text(score_el).strip() if score_el else ""
 
-            # cek apakah ini auto-win
-            is_autowin = any(k in score_text for k in ["Win", "Winner", "FF", "DQ"])
-            is_empty_game = (len(games) == 0) or (len(games) == 1 and not get_text(games[0]).strip())
+            # # cek apakah ini auto-win
+            # is_autowin = any(k in score_text for k in ["Win", "Winner", "FF", "DQ"])
+            # is_empty_game = (len(games) == 0) or (len(games) == 1 and not get_text(games[0]).strip())
 
-            if is_autowin or is_empty_game:
-                logging.info(f"Auto-win/FF detected ({score_text}). Using fallback.")
-                return []
+            # if is_autowin or is_empty_game:
+            #     logging.info(f"Auto-win/FF detected ({score_text}). Using fallback.")
+            #     return []
 
             bans_item = get_item(popup, ".brkts-popup-mapveto__ban-round")
             all_bans = []
@@ -154,8 +215,8 @@ class MatchScraper:
             home_bans, away_bans = [], []
             for i, bans in enumerate(all_bans):
                 if bans == []:
-                    home_bans.append([])
-                    away_bans.append([])
+                    home_bans.append([np.nan, np.nan, np.nan, np.nan, np.nan])
+                    away_bans.append([np.nan, np.nan, np.nan, np.nan, np.nan])
                 else:
                     mid = len(bans) // 2
                     home, away = bans[:mid], bans[mid:]
@@ -173,10 +234,10 @@ class MatchScraper:
                 if map:
                     map_name = get_text(map)
                     if map_name == "":
-                        map_name = "unknown"
+                        map_name = np.nan
                 if ":" not in duration:
-                    duration = "unknown"
-                    map_name = "unknown"
+                    duration = np.nan
+                    map_name = np.nan
                 logging.info(f"Found duration game: {duration}.")
                 logging.info(f"Found map name: {map_name}.")
 
@@ -194,15 +255,15 @@ class MatchScraper:
                 
                 results.append({
                     "date": date,
-                    "game_num": i,
+                    "game_num": int(i),
                     "home_team": home_name,
                     "home_alias": home_alias,
                     "away_team": away_name,
                     "away_alias": away_alias,
                     "home_picks": home_picks,
                     "away_picks": away_picks,
-                    "home_bans": home_bans[i-1] if i-1 < len(home_bans) else [],
-                    "away_bans": away_bans[i-1] if i-1 < len(away_bans) else [],
+                    "home_bans": home_bans[i-1] if i-1 < len(home_bans) else [np.nan, np.nan, np.nan, np.nan, np.nan],
+                    "away_bans": away_bans[i-1] if i-1 < len(away_bans) else [np.nan, np.nan, np.nan, np.nan, np.nan],
                     "duration": duration,
                     "map": map_name,
                     "home_status": "win" if "win" in classes or any("win" in t.lower() for t in classes) else "loss",
