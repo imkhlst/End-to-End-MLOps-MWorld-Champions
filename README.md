@@ -1,5 +1,11 @@
 # Esports-Match-Outcome-Prediction
 
+## Quick Summary
+
+- Built a machine learning model to predict esports match outcomes
+- Achieved ROC-AUC ~0.68
+- Key insight: model struggles with comeback scenarios and balanced matches
+
 ## Overview
 
 This project aims to predict the outcome of esports matches using historical team performance data. The model focuses on identifying key factors that influence match results, such as team strength, objective control, and game dynamics.
