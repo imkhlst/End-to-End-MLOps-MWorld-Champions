@@ -28,6 +28,8 @@ The dataset was built from scraped match data and processed into a structured fo
 Key features used in the final model:
 - **Elo Difference (elo_diff)**
 -> Represents relative team strength.
+- **Draft Intelligence (draft_wr_diff)**
+-> Represent relative draft composition strength.
 - **Objective Difference (objective_diff)**
 -> Measures macro gameplay dominance (towers, lords, turtles).
 - **Winrate Difference (winrate_diff)**
@@ -46,47 +48,52 @@ Why Logistic Regression?
 
 ## Evaluation
 Metrics:
-- Accuracy: ~0.60
-- ROC-AUC: ~0.68
-- Log Loss: ~0.70
+- Accuracy: ~0.63
+- ROC-AUC: ~0.74
+- Log Loss: ~0.59
 - Confusion Matrix: Balanced performance but notable false negatives (missed wins)
 
 ## Model Interpretation
 **Feature Importance (SHAP)**
 
-<img width="760" height="780" alt="output" src="https://github.com/user-attachments/assets/6afc7c1b-ff58-4cf7-b75f-28fe879c256e" />
+![Feature Importance](/feature_importance.png)
 
 Key observations:
 
-- Elo difference (feature 1), scaling difference (feature 10), and objective control (feature 3) are dominant predictors
-- Winrate difference (feature 8) contributes less compared to structural features
+- Draft winrate (feature 1), early gold difference (feature 6), and mid gold difference (feature 8) are dominant predictors
+- Late gold diff (feature 10) and kda difference (feature 3) contributes less compared to structural features
 
 **Example Prediction (SHAP Waterfall)**
 
-<img width="856" height="600" alt="output2" src="https://github.com/user-attachments/assets/9466b38e-36b5-4838-b199-8e76d79431ce" />
+![Sample Match SHAP Waterfall](/sample_match_shap_waterfall.png)
 
 This example highlights a misclassified match where:
-
 - The model predicts loss
 - The team actually wins due to late-game scaling (comeback)
 
 ## Insights
-**Error Analysis**
-- The model shows reduced performance in closely matched games (small Elo differences), where predictions fall within a low-confidence range (0.4–0.65).
-- The model is biased toward early and macro-level indicators (Elo and objective control), often misclassifying matches where teams win through late-game scaling (comeback scenarios).
-**Segment Analysis**
-- The model performs significantly better in matches with large disparities in team strength and economic advantage.
+### Draft Intelligence significantly improve prediction
+incorporating draft-based features improve model recall and overall predictive performance, indicating tha hero selection plays a critical role beyond traditional performance metrics.
+### Feature redundancy harms model clarity
+Removing redundant features imporve model stability and interpretability without sacrificing performance.
+### Phase-based features dominate
+Early and mid-game advatages provide stronger predictive signals comapred to aggregate metrics such as total gold or scaling.
+### Simpler model performs better
+A reduced feature set leads to better generalization suggesting tha model simplicity is preferable over feature abundance.
+### Error Analysis
+- The model shows reduced performance in closely matched games (small draft winrate and economy differences features), where predictions fall within a low-confidence range (0.4–0.65).
+- The model is biased toward early and macro-level indicators (draft winrate, early and mid gold differences feature), often misclassifying matches where teams win through late-game scaling (comeback scenarios).
+### Segment Analysis
+- The model performs significantly better in matches with large disparities in draft composition and economic advantage.
 - In balanced matches, the model struggles due to limited discriminative signals.
-- Elo and objective features dominate the prediction process, overshadowing the contribution of winrate.
+- Draft intelligence and economy difference features dominate the prediction process, overshadowing the contribution of scaling and winrate.
 
 ## Limitations
 - Difficulty capturing comeback scenarios
 - Limited modeling of feature interactions
 - Performance drops in balanced matches
-- No draft/hero-level intelligence included
 
 ## Future Improvements
-- Add draft intelligence (hero pick analysis)
 - Model feature interactions (e.g., scaling vs objective)
 - Introduce match pressure factors (stage, bracket importance)
 - Build real-time prediction system
