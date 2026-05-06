@@ -3,7 +3,7 @@
 ## Quick Summary
 
 - Built a machine learning model to predict esports match outcomes
-- Achieved ROC-AUC ~0.68
+- Achieved ROC-AUC ~0.74
 - Key insight: model struggles with comeback scenarios and balanced matches
 
 ## Overview
