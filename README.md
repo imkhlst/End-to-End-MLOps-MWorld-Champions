@@ -8,7 +8,7 @@
 
 ## Overview
 
-This project aims to predict the outcome of esports matches using historical team performance data. The model focuses on identifying key factors that influence match results, such as team strength, objective control, and game dynamics.
+This project aims to predict the outcome of esports matches using historical team performance data. The model focuses on identifying key factors that influence match results, such as team strength, objective control, game dynamics, and draft intelligence.
 
 ## Problem Statement
 
@@ -28,8 +28,10 @@ The dataset was built from scraped match data and processed into a structured fo
 Key features used in the final model:
 - **Elo Difference (elo_diff)**
 -> Represents relative team strength.
-- **Draft Intelligence (draft_wr_diff)**
--> Represent relative draft composition strength.
+- **Draft Winrate Difference (draft_wr_diff)**
+-> Represent relative draft performance consistency.
+- **Draft Stability Difference (draft_stability_diff)**
+-> Refresent relative average draft stability.
 - **Objective Difference (objective_diff)**
 -> Measures macro gameplay dominance (towers, lords, turtles).
 - **Winrate Difference (winrate_diff)**
@@ -46,22 +48,28 @@ Why Logistic Regression?
 - Stable performance
 - Suitable for understanding feature impact
 
+## Feature Selection
+SHAP shows interaction feature has represented by scaling or main transistion feature and draft tendency feature does not improve model performance significantly but make noisy interpretability. 
+
 ## Evaluation
 Metrics:
-- Accuracy: ~0.63
+- Accuracy: ~0.62
 - ROC-AUC: ~0.74
 - Log Loss: ~0.59
 - Confusion Matrix: Balanced performance but notable false negatives (missed wins)
 
 ## Model Interpretation
+Model -> Logistic Regression
+Threshold prediction -> ~0.50
+F1 score -> ~0.74
 **Feature Importance (SHAP)**
 
 ![Feature Importance](/feature_importance.png)
 
 Key observations:
 
-- Draft winrate (feature 1), early gold difference (feature 6), and mid gold difference (feature 8) are dominant predictors
-- Late gold diff (feature 10) and kda difference (feature 3) contributes less compared to structural features
+- Scaling difference(feature 6), elo difference (feature 2), objective difference (feature 4), and draft tendency (feature 1) are dominant impact on model output
+- Draft stability difference (feature 1) and kda difference (feature 3) contributes less compared to structural features
 
 **Example Prediction (SHAP Waterfall)**
 
@@ -73,11 +81,9 @@ This example highlights a misclassified match where:
 
 ## Insights
 ### Draft Intelligence significantly improve prediction
-incorporating draft-based features improve model recall and overall predictive performance, indicating tha hero selection plays a critical role beyond traditional performance metrics.
+incorporating draft-based features improve model recall and overall predictive performance, indicating that hero selection plays a critical role beyond traditional performance metrics. in other hand, draft tendency feature does not improve model performance significantly but make noisy interpretability.
 ### Feature redundancy harms model clarity
 Removing redundant features imporve model stability and interpretability without sacrificing performance.
-### Phase-based features dominate
-Early and mid-game advatages provide stronger predictive signals comapred to aggregate metrics such as total gold or scaling.
 ### Simpler model performs better
 A reduced feature set leads to better generalization suggesting tha model simplicity is preferable over feature abundance.
 ### Error Analysis
@@ -86,7 +92,7 @@ A reduced feature set leads to better generalization suggesting tha model simpli
 ### Segment Analysis
 - The model performs significantly better in matches with large disparities in draft composition and economic advantage.
 - In balanced matches, the model struggles due to limited discriminative signals.
-- Draft intelligence and economy difference features dominate the prediction process, overshadowing the contribution of scaling and winrate.
+- Economy difference features dominate the prediction process, overshadowing the contribution of draft intellingence.
 
 ## Limitations
 - Difficulty capturing comeback scenarios
